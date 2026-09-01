@@ -1,0 +1,107 @@
+name: 🚀 Build and Deploy DeckPilot PWA to OVH VPS
+
+# deckpilote.dibodev.fr serves the iPhone télécommande (mobile/index.html) plus a Nitro API relay
+# that forwards colour commands to the desktop app over HTTPS. Static assets land in html/; the
+# Nitro node-server runs under pm2 and nginx proxies /api/* to it (same pattern as DevLeadHunter).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: 🏗️ Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            web
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: 📦 Install dependencies
+        run: npm ci
+        working-directory: ./web
+
+      - name: 🛠️ Build mobile PWA + relay API
+        run: npm run build:remote
+        working-directory: ./web
+        env:
+          NODE_ENV: production
+          NUXT_MOBILE_DEPLOY: "1"
+          NITRO_PRESET: node-server
+
+      - name: 🧹 Prepare web root on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf /var/www/deckpilote.dibodev.fr/html
+            rm -rf /var/www/deckpilote.dibodev.fr/server
+            mkdir -p /var/www/deckpilote.dibodev.fr/html
+            mkdir -p /var/www/deckpilote.dibodev.fr/server
+
+      - name: 📤 Deploy static assets
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "web/.output/public/"
+          target: "/var/www/deckpilote.dibodev.fr/html"
+          strip_components: 3
+
+      - name: 📤 Deploy Nitro server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "web/.output/server/"
+          target: "/var/www/deckpilote.dibodev.fr/server"
+          strip_components: 3
+          tar_dereference: true
+          overwrite: true
+
+      - name: 🛠️ Start Nitro relay server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/deckpilote.dibodev.fr/server
+
+            command -v node || {
+              curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            }
+
+            command -v pm2 || npm install -g pm2
+
+            pm2 describe deckpilote.dibodev.fr > /dev/null 2>&1 && pm2 delete deckpilote.dibodev.fr || true
+
+            PORT=5616 pm2 start index.mjs \
+              --name deckpilote.dibodev.fr \
+              --env production
+
+            pm2 save
+            pm2 list
+
+            ln -sfn /var/www/deckpilote.dibodev.fr/html /var/www/deckpilote.dibodev.fr/public
+
+            sudo nginx -t && sudo systemctl reload nginx

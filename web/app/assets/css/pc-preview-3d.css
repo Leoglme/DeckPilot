@@ -1,0 +1,1205 @@
+/* Ported from maquette/apercu-pc-3d.html */
+.dp-pc-preview {
+  --mono: var(--app-font-mono);
+  --disp: var(--app-font-display);
+  --c1: var(--scene-a);
+  --c2: var(--scene-b);
+  --c3: var(--scene-c);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+  overflow: hidden;
+  padding: 0;
+  background: #07050d;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dp-pc-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.dp-pc-preview .aurora {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dp-pc-preview .aurora span {
+  position: absolute;
+  width: 44%;
+  height: 44%;
+  border-radius: 50%;
+  filter: blur(90px);
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  transition: background 0.8s ease;
+}
+
+.dp-pc-preview .aurora .a1 {
+  left: -12%;
+  top: -16%;
+  background: radial-gradient(circle, var(--c1), transparent 65%);
+  animation: dp-pv-drift1 14s ease-in-out infinite;
+}
+.dp-pc-preview .aurora .a2 {
+  right: -14%;
+  top: 4%;
+  background: radial-gradient(circle, var(--c2), transparent 65%);
+  animation: dp-pv-drift2 17s ease-in-out infinite;
+}
+.dp-pc-preview .aurora .a3 {
+  left: 28%;
+  bottom: -26%;
+  background: radial-gradient(circle, var(--c3), transparent 65%);
+  animation: dp-pv-drift3 15s ease-in-out infinite;
+}
+
+@keyframes dp-pv-drift1 {
+  50% {
+    transform: translate(6%, 4%) scale(1.15);
+  }
+}
+@keyframes dp-pv-drift2 {
+  50% {
+    transform: translate(-5%, 6%) scale(1.12);
+  }
+}
+@keyframes dp-pv-drift3 {
+  50% {
+    transform: translate(4%, -5%) scale(1.18);
+  }
+}
+
+.dp-pc-preview .hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.dp-pc-preview .hud-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.dp-pc-preview .live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--app-font-mono);
+  font-size: 10.5px;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.dp-pc-preview .live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c1);
+  box-shadow: 0 0 8px var(--c1);
+  animation: bleed 2s ease-in-out infinite;
+}
+
+.dp-pc-preview .live--hw i {
+  background: var(--app-ok);
+  box-shadow: 0 0 8px var(--app-ok);
+}
+
+.dp-pc-preview .hud-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dp-pc-preview .scene-meta h2 {
+  margin-top: 4px;
+  font-family: var(--app-font-display);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+  text-shadow: 0 0 30px color-mix(in srgb, var(--c2) 45%, transparent);
+}
+
+.dp-pc-preview .scene-meta p {
+  margin-top: 8px;
+  font-family: var(--app-font-mono);
+  font-size: 11px;
+  color: var(--app-ink-soft);
+}
+
+.dp-pc-preview .scene-meta p b {
+  color: var(--app-ink);
+  font-weight: 600;
+}
+
+.dp-pc-preview .hint {
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgb(255 255 255 / 0.38);
+  text-align: right;
+}
+
+.dp-pc-preview .part.part--off .sk:not(.fan),
+.dp-pc-preview .part.part--off .fan > * {
+  filter: brightness(0.14) saturate(0.3);
+}
+
+/* ============================================================
+   DeckPilot — maquette "Aperçu PC 3D"
+   Un boîtier tour en CSS 3D pur : vitre, carte mère, AIO,
+   RAM, GPU, ventilateurs. Aucune dépendance.
+   ============================================================ */
+
+/* ---------- scène 3D ---------- */
+
+.dp-pc-preview .stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  perspective: 1700px;
+  perspective-origin: 50% 44%;
+  cursor: grab;
+}
+
+.dp-pc-preview .stage.stage--dragging {
+  cursor: grabbing;
+}
+
+.dp-pc-preview .pivot {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@media (max-width: 900px) {
+  .dp-pc-preview .stage {
+    inset: 0;
+  }
+}
+
+/* Boîtier : X = profondeur 470 (avant à +235), Y = hauteur 430, Z = largeur 250 (vitre à +125) */
+.dp-pc-preview .pc {
+  position: relative;
+  width: 470px;
+  height: 430px;
+  transform-style: preserve-3d;
+}
+
+.dp-pc-preview .pc > * {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+}
+
+.dp-pc-preview .part {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.dp-pc-preview .sk {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transition:
+    filter 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.dp-pc-preview .part[data-part] .sk {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* ---------- sol ---------- */
+
+.dp-pc-preview .floor {
+  width: 1150px;
+  height: 820px;
+  transform: translate(-50%, -50%) rotateX(90deg) translateZ(-219px);
+  background:
+    radial-gradient(ellipse 46% 38% at 50% 46%, rgb(0 0 0 / 0.75), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, var(--c1) 16%, transparent), transparent 72%),
+    radial-gradient(ellipse 40% 34% at 62% 56%, color-mix(in srgb, var(--c3) 12%, transparent), transparent 70%),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 46px);
+  -webkit-mask: radial-gradient(ellipse 50% 50% at 50% 50%, #000 40%, transparent 78%);
+  mask: radial-gradient(ellipse 50% 50% at 50% 50%, #000 40%, transparent 78%);
+}
+
+/* ---------- coque ---------- */
+
+/* vitres en verre trempé : côté + façade, angle droit "aquarium" */
+.dp-pc-preview .glass,
+.dp-pc-preview .glass-front {
+  border: 1.5px solid rgb(255 255 255 / 0.16);
+  border-radius: 10px;
+  background: linear-gradient(
+    112deg,
+    rgb(170 190 255 / 0.1),
+    rgb(255 255 255 / 0.02) 28%,
+    rgb(255 255 255 / 0.07) 46%,
+    rgb(170 190 255 / 0.03) 62%,
+    rgb(255 255 255 / 0.05)
+  );
+  box-shadow: inset 0 0 34px rgb(255 255 255 / 0.05);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dp-pc-preview .glass {
+  width: 470px;
+  height: 430px;
+  transform: translate(-50%, -50%) translateZ(125px);
+}
+
+.dp-pc-preview .glass-front {
+  width: 250px;
+  height: 430px;
+  transform: translate(-50%, -50%) rotateY(90deg) translateZ(235px);
+}
+
+.dp-pc-preview .glass::after,
+.dp-pc-preview .glass-front::after {
+  content: '';
+  position: absolute;
+  inset: -60% -30%;
+  background: linear-gradient(64deg, transparent 42%, rgb(255 255 255 / 0.09) 50%, transparent 58%);
+  animation: sweep 7s ease-in-out infinite;
+}
+
+.dp-pc-preview .glass-front::after {
+  animation-duration: 9s;
+  animation-delay: 1.4s;
+}
+
+@keyframes sweep {
+  0%,
+  100% {
+    transform: translateX(-24%);
+  }
+  50% {
+    transform: translateX(24%);
+  }
+}
+
+/* plateau carte mère (face lointaine) */
+.dp-pc-preview .tray {
+  width: 470px;
+  height: 430px;
+  transform: translate(-50%, -50%) translateZ(-125px) rotateY(180deg);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 22% 30%, rgb(255 255 255 / 0.03), transparent 44%),
+    linear-gradient(160deg, #100c19, #090711);
+  border: 1px solid rgb(255 255 255 / 0.05);
+}
+
+.dp-pc-preview .tray::before {
+  content: '';
+  position: absolute;
+  inset: 24px 30px;
+  background: repeating-linear-gradient(0deg, transparent 0 64px, rgb(255 255 255 / 0.025) 64px 66px);
+}
+
+@keyframes bleed {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* dos (à −X) : grilles d'aération + découpe ronde du ventilateur d'extraction */
+.dp-pc-preview .back {
+  width: 250px;
+  height: 430px;
+  transform: translate(-50%, -50%) rotateY(-90deg) translateZ(235px);
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background:
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.04) 0 2px, transparent 2px 9px) 0 55% / 100% 34% no-repeat,
+    linear-gradient(180deg, #0c0914, #080610);
+  -webkit-mask: radial-gradient(circle 50px at 50% 17.9%, transparent 49px, #000 50px);
+  mask: radial-gradient(circle 50px at 50% 17.9%, transparent 49px, #000 50px);
+}
+
+/* capot (haut) : vent au-dessus du radiateur */
+.dp-pc-preview .top {
+  width: 470px;
+  height: 250px;
+  transform: translate(-50%, -50%) rotateX(90deg) translateZ(215px);
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.05) 0 3px, transparent 3px 16px),
+    linear-gradient(90deg, #0e0b16, #0a0812);
+}
+
+.dp-pc-preview .top::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 34%;
+  top: 18%;
+  bottom: 18%;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--c2) 30%, transparent), transparent 74%);
+  mix-blend-mode: screen;
+  animation: bleed 3.4s ease-in-out infinite;
+}
+
+/* plancher du boîtier */
+.dp-pc-preview .bottom {
+  width: 470px;
+  height: 250px;
+  transform: translate(-50%, -50%) rotateX(-90deg) translateZ(215px);
+  background: #06040b;
+  border-radius: 10px;
+}
+
+/* bandeau LED intérieur, le long du capot */
+.dp-pc-preview .striptop {
+  width: 460px;
+  height: 3px;
+  transform: translate(-50%, -50%) translate3d(0, -206px, 118px);
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3));
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--c2) 70%, transparent);
+}
+
+/* ---------- carte mère ---------- */
+
+.dp-pc-preview .mobo-board {
+  width: 300px;
+  height: 290px;
+  transform: translate(-50%, -50%) translate3d(-60px, -35px, -105px);
+  border: 1px solid color-mix(in srgb, var(--c1) 26%, rgb(255 255 255 / 0.08));
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 23px, rgb(255 255 255 / 0.022) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgb(255 255 255 / 0.022) 23px 24px),
+    linear-gradient(160deg, #181322, #0e0b16);
+  box-shadow: inset 0 0 34px -14px color-mix(in srgb, var(--c1) 55%, transparent);
+}
+
+/* radiateur VRM + capot IO */
+.dp-pc-preview .mobo-board .io {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 64px;
+  height: 118px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #241d33, #131019);
+  border: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.dp-pc-preview .mobo-board .io::after {
+  content: 'DP-X870';
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  color: var(--c1);
+  text-shadow: 0 0 8px var(--c1);
+}
+
+.dp-pc-preview .mobo-board .vrm {
+  position: absolute;
+  left: 84px;
+  top: 8px;
+  width: 130px;
+  height: 26px;
+  border-radius: 5px;
+  background: repeating-linear-gradient(90deg, #2a2340 0 5px, #171225 5px 10px);
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+/* socket CPU (la pompe AIO vient se poser dessus, en 3D) */
+.dp-pc-preview .mobo-board .socket {
+  position: absolute;
+  left: 96px;
+  top: 52px;
+  width: 96px;
+  height: 96px;
+  border-radius: 9px;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background: linear-gradient(160deg, #221b31, #120f1c);
+}
+
+.dp-pc-preview .mobo-board .m2 {
+  position: absolute;
+  left: 96px;
+  top: 168px;
+  width: 150px;
+  height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #1e1830, #151022);
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.dp-pc-preview .mobo-board .pcie {
+  position: absolute;
+  left: 40px;
+  top: 212px;
+  width: 220px;
+  height: 10px;
+  border-radius: 3px;
+  background: #0a0813;
+  border: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.dp-pc-preview .mobo-board .chipset {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #241d33, #131019);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.dp-pc-preview .mobo-board .chipset::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--c1) 70%, #fff 6%);
+  box-shadow: 0 0 14px var(--c1);
+  animation: bleed 2.8s ease-in-out infinite;
+}
+
+/* liseré RGB du bord avant de la carte */
+.dp-pc-preview .mobo-strip {
+  width: 4px;
+  height: 250px;
+  transform: translate(-50%, -50%) translate3d(86px, -35px, -103px);
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--c1), color-mix(in srgb, var(--c1) 30%, transparent));
+  box-shadow: 0 0 12px var(--c1);
+}
+
+/* ---------- RAM : 4 barrettes perpendiculaires à la carte ---------- */
+
+.dp-pc-preview .ram-stick {
+  width: 44px;
+  height: 132px;
+  transform: translate(-50%, -50%) translate3d(calc(var(--rx3d) - 100px), -80px, -84px) rotateY(90deg);
+  border-radius: 4px 4px 2px 2px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: linear-gradient(180deg, #262039, #141019);
+}
+
+.dp-pc-preview .ram-stick::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 3px;
+  height: 7px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--c2), var(--c3));
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--c2) 80%, transparent);
+  animation: bleed 2.6s ease-in-out infinite;
+}
+
+.dp-pc-preview .ram-stick::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 18px;
+  bottom: 8px;
+  background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.05) 0 2px, transparent 2px 9px);
+}
+
+/* ---------- watercooling : radiateur + tubes + pompe ---------- */
+
+/* radiateur : vraie boîte 3D sous le capot (fins avant/arrière, dessous, réservoirs aux bouts) */
+.dp-pc-preview .rad-front,
+.dp-pc-preview .rad-back {
+  width: 260px;
+  height: 26px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, transparent 74%, color-mix(in srgb, var(--c2) 45%, transparent)),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.14) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #241d36, #151020);
+}
+
+.dp-pc-preview .rad-front {
+  transform: translate(-50%, -50%) translate3d(-60px, -186px, 50px);
+}
+.dp-pc-preview .rad-back {
+  transform: translate(-50%, -50%) translate3d(-60px, -186px, -80px) rotateY(180deg);
+}
+
+.dp-pc-preview .rad-front i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgb(6 4 10 / 0.8);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--c2);
+  text-shadow: 0 0 8px var(--c2);
+}
+
+.dp-pc-preview .rad-top {
+  width: 260px;
+  height: 130px;
+  transform: translate(-50%, -50%) translate3d(-60px, -199px, -15px) rotateX(90deg);
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.055) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, #251d3a, #151021);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.09);
+}
+
+.dp-pc-preview .rad-bottom {
+  width: 260px;
+  height: 130px;
+  transform: translate(-50%, -50%) translate3d(-60px, -173px, -15px) rotateX(-90deg);
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 5px), #100c18;
+}
+
+.dp-pc-preview .rad-cap {
+  width: 130px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background:
+    linear-gradient(180deg, transparent 72%, color-mix(in srgb, var(--c2) 42%, transparent)),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.08) 0 1px, transparent 1px 6px),
+    linear-gradient(180deg, #3a2f58, #1a1428);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+
+.dp-pc-preview .rad-cap--l {
+  transform: translate(-50%, -50%) translate3d(-190px, -186px, -15px) rotateY(90deg);
+}
+.dp-pc-preview .rad-cap--r {
+  transform: translate(-50%, -50%) translate3d(70px, -186px, -15px) rotateY(90deg);
+}
+
+/* raccords des tubes sur le réservoir droit */
+.dp-pc-preview .rad-cap--r::before,
+.dp-pc-preview .rad-cap--r::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: #0a0812;
+  border: 1.5px solid color-mix(in srgb, var(--c2) 45%, rgb(255 255 255 / 0.25));
+}
+
+.dp-pc-preview .rad-cap--r::before {
+  right: 8px;
+}
+.dp-pc-preview .rad-cap--r::after {
+  right: 26px;
+}
+
+/* les 2 ventilateurs du radiateur : montés dessous, plus fins que ceux du boîtier */
+.dp-pc-preview .fan--slim .fan-face--f {
+  transform: translateZ(8px);
+}
+.dp-pc-preview .fan--slim .fan-face--b {
+  transform: translateZ(-8px) rotateY(180deg);
+}
+.dp-pc-preview .fan--slim .fan-s--t,
+.dp-pc-preview .fan--slim .fan-s--b {
+  height: 16px;
+  margin-top: -8px;
+}
+.dp-pc-preview .fan--slim .fan-s--l,
+.dp-pc-preview .fan--slim .fan-s--r {
+  width: 16px;
+  margin-left: -8px;
+}
+
+/* la lumière de l'anneau fuit par les flancs : c'est ce qu'on voit de profil */
+.dp-pc-preview .fan--slim .fan-s {
+  background: linear-gradient(90deg, #131020, color-mix(in srgb, var(--fc) 38%, #131020) 50%, #131020);
+  box-shadow: 0 0 12px -3px var(--fc);
+  animation: bleed 2.8s ease-in-out infinite;
+}
+
+.dp-pc-preview .fan--r1 {
+  transform: translate(-50%, -50%) translate3d(-130px, -164px, -15px) rotateX(90deg);
+}
+.dp-pc-preview .fan--r2 {
+  transform: translate(-50%, -50%) translate3d(-10px, -164px, -15px) rotateX(90deg);
+}
+
+/* halo sous le radiateur : la lumière des 2 fans slim */
+.dp-pc-preview .rad-glow {
+  width: 260px;
+  height: 70px;
+  transform: translate(-50%, -50%) translate3d(-60px, -146px, 40px);
+  /* pas de mix-blend-mode ici : une propriété de fusion sur un enfant direct d'un contexte
+     preserve-3d force Chrome à aplatir toute la part en 2D (cartes empilées) */
+  background:
+    radial-gradient(60px 46px at 27% 0%, color-mix(in srgb, var(--c2) 55%, transparent), transparent 74%),
+    radial-gradient(60px 46px at 73% 0%, color-mix(in srgb, var(--c2) 55%, transparent), transparent 74%);
+  animation: bleed 3.2s ease-in-out infinite;
+  pointer-events: none !important;
+}
+
+/* tubes (SVG posé dans le volume, entre carte et vitre) */
+.dp-pc-preview .tubes {
+  width: 220px;
+  height: 170px;
+  transform: translate(-50%, -50%) translate3d(-38px, -128px, -68px);
+}
+
+.dp-pc-preview .tubes svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* pompe : cylindre 3D posé sur le socket CPU, chapeau rond à miroir infini */
+.dp-pc-preview .pump-cap {
+  width: 88px;
+  height: 88px;
+  transform: translate(-50%, -50%) translate3d(-72px, -80px, -57px);
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: radial-gradient(circle at 38% 32%, #251e36, #0e0b16);
+  box-shadow: 0 0 24px -6px color-mix(in srgb, var(--c2) 60%, transparent);
+}
+
+.dp-pc-preview .pump-cap .pumpring {
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: conic-gradient(var(--c1), var(--c2), var(--c3), var(--c1));
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 58% 82%, transparent 84%);
+  mask: radial-gradient(circle, transparent 56%, #000 58% 82%, transparent 84%);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c2) 80%, transparent));
+  animation: spin 3.2s linear infinite;
+}
+
+.dp-pc-preview .pump-cap::after {
+  content: 'DP';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--disp);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 10px var(--c2);
+}
+
+/* corps cylindrique : 12 segments du socle au chapeau, avec un anneau lumineux qui fait
+   le tour du cylindre — c'est lui qu'on voit quand on regarde la pompe de profil */
+.dp-pc-preview .pump-seg {
+  width: 25px;
+  height: 40px;
+  transform: translate(-50%, -50%) translate3d(-72px, -80px, -78px) rotateZ(var(--a)) translateY(-42px) rotateX(90deg);
+  background: linear-gradient(
+    180deg,
+    #453a63 0%,
+    #2c2347 46%,
+    color-mix(in srgb, var(--c2) 55%, #2c2347) 78%,
+    var(--c2) 92%,
+    color-mix(in srgb, var(--c2) 75%, #ffffff 25%) 100%
+  );
+  box-shadow: inset 1px 0 0 rgb(255 255 255 / 0.08);
+  filter: brightness(var(--lum, 1));
+}
+
+/* couronne du chapeau : 12 segments qui enveloppent le bord du cap pour lui donner
+   une vraie épaisseur — visible même quand le disque du cap est vu par la tranche */
+.dp-pc-preview .pump-rim {
+  width: 24px;
+  height: 9px;
+  transform: translate(-50%, -50%) translate3d(-72px, -80px, -57px) rotateZ(var(--a)) translateY(-44px) rotateX(90deg);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c2) 60%, #f2edff) 0%,
+    color-mix(in srgb, var(--c2) 70%, #2c2347) 55%,
+    color-mix(in srgb, var(--c2) 35%, #241c3a) 100%
+  );
+  box-shadow: 0 0 12px -2px color-mix(in srgb, var(--c2) 70%, transparent);
+  filter: brightness(var(--lum, 1));
+}
+
+/* support socket : un vrai bloc épais vissé sur la carte mère */
+.dp-pc-preview .pump-base {
+  width: 106px;
+  height: 106px;
+  transform: translate(-50%, -50%) translate3d(-72px, -80px, -98px);
+  border-radius: 16px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background:
+    radial-gradient(3px 3px at 9% 9%, rgb(255 255 255 / 0.25) 45%, transparent 55%),
+    radial-gradient(3px 3px at 91% 9%, rgb(255 255 255 / 0.25) 45%, transparent 55%),
+    radial-gradient(3px 3px at 9% 91%, rgb(255 255 255 / 0.25) 45%, transparent 55%),
+    radial-gradient(3px 3px at 91% 91%, rgb(255 255 255 / 0.25) 45%, transparent 55%),
+    linear-gradient(160deg, #1c1630, #120e1c);
+}
+
+.dp-pc-preview .pump-base-s {
+  background: linear-gradient(180deg, #352b52 0%, #221b3a 45%, #171126 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+
+.dp-pc-preview .pump-base-s--t,
+.dp-pc-preview .pump-base-s--b {
+  width: 106px;
+  height: 7px;
+}
+
+.dp-pc-preview .pump-base-s--t {
+  transform: translate(-50%, -50%) translate3d(-72px, -133px, -101.5px) rotateX(90deg);
+}
+.dp-pc-preview .pump-base-s--b {
+  transform: translate(-50%, -50%) translate3d(-72px, -27px, -101.5px) rotateX(90deg);
+}
+
+.dp-pc-preview .pump-base-s--l,
+.dp-pc-preview .pump-base-s--r {
+  width: 7px;
+  height: 106px;
+}
+
+.dp-pc-preview .pump-base-s--l {
+  transform: translate(-50%, -50%) translate3d(-125px, -80px, -101.5px) rotateY(90deg);
+}
+.dp-pc-preview .pump-base-s--r {
+  transform: translate(-50%, -50%) translate3d(-19px, -80px, -101.5px) rotateY(90deg);
+}
+
+/* ---------- GPU : boîte 3D horizontale ---------- */
+
+/* backplate (face du dessus, visible caméra) */
+.dp-pc-preview .gpu-top {
+  width: 300px;
+  height: 100px;
+  transform: translate(-50%, -50%) translate3d(-70px, 37px, -55px) rotateX(90deg);
+  border-radius: 7px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background:
+    linear-gradient(
+      104deg,
+      transparent 58%,
+      color-mix(in srgb, var(--c3) 26%, transparent) 58.5% 66%,
+      transparent 66.5%
+    ),
+    linear-gradient(
+      104deg,
+      transparent 70%,
+      color-mix(in srgb, var(--c3) 15%, transparent) 70.5% 75%,
+      transparent 75.5%
+    ),
+    linear-gradient(90deg, #1d1729, #100c18);
+}
+
+.dp-pc-preview .gpu-top::before {
+  content: 'DECKPILOT · GX-90';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--c3);
+  text-shadow: 0 0 12px var(--c3);
+}
+
+.dp-pc-preview .gpu-top::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 62px;
+  height: 62px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--c3) 70%, transparent);
+  background: radial-gradient(circle, #0a0812 55%, transparent 56%);
+  box-shadow:
+    0 0 16px -4px var(--c3),
+    inset 0 0 12px -4px var(--c3);
+}
+
+/* tranche côté vitre : silhouettes de fans + liseré RGB */
+.dp-pc-preview .gpu-side {
+  width: 300px;
+  height: 46px;
+  transform: translate(-50%, -50%) translate3d(-70px, 60px, -5px);
+  border-radius: 7px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background:
+    radial-gradient(20px 20px at 17% 50%, rgb(255 255 255 / 0.06) 62%, transparent 66%),
+    radial-gradient(20px 20px at 50% 50%, rgb(255 255 255 / 0.06) 62%, transparent 66%),
+    radial-gradient(20px 20px at 83% 50%, rgb(255 255 255 / 0.06) 62%, transparent 66%),
+    linear-gradient(180deg, #221b31, #120f1b);
+}
+
+.dp-pc-preview .gpu-side .gpustrip {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 4px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--c3), var(--c2));
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--c3) 85%, transparent);
+  animation: bleed 2.4s ease-in-out infinite;
+}
+
+/* petit capot d'extrémité, côté façade */
+.dp-pc-preview .gpu-end {
+  width: 100px;
+  height: 46px;
+  transform: translate(-50%, -50%) translate3d(80px, 60px, -55px) rotateY(90deg);
+  border-radius: 0 7px 7px 0;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: linear-gradient(180deg, #1c1628, #110e19);
+}
+
+.dp-pc-preview .gpu-end::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 26px;
+  height: 8px;
+  border-radius: 2px;
+  background: #08060e;
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+/* ---------- carénage d'alim ---------- */
+
+/* comme sur le Frame 4500X : le carénage n'occupe que la moitié gauche, fermé de tous côtés */
+.dp-pc-preview .psu-top {
+  width: 245px;
+  height: 185px;
+  transform: translate(-50%, -50%) translate3d(-112.5px, 130px, -32.5px) rotateX(90deg);
+  border-radius: 6px;
+  background: linear-gradient(90deg, #131019, #0c0a13);
+  border: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.dp-pc-preview .psu-face {
+  width: 245px;
+  height: 85px;
+  transform: translate(-50%, -50%) translate3d(-112.5px, 172.5px, 60px);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #14101d, #0b0913);
+  border: 1px solid rgb(255 255 255 / 0.07);
+}
+
+/* capot d'extrémité : ferme le carénage côté façade vitrée */
+.dp-pc-preview .psu-end {
+  width: 185px;
+  height: 85px;
+  transform: translate(-50%, -50%) translate3d(10px, 172.5px, -32.5px) rotateY(90deg);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #120f1b, #0a0812);
+  border: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.dp-pc-preview .psu-end::before {
+  content: '';
+  position: absolute;
+  inset: 14px 18px;
+  background: radial-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1.5px) 0 0 / 7px 7px;
+}
+
+.dp-pc-preview .psu-face::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--c1), var(--c2), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c1) 70%, transparent);
+}
+
+.dp-pc-preview .psu-face::after {
+  content: 'DECKPILOT';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--disp);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: rgb(255 255 255 / 0.55);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--c2) 60%, transparent);
+}
+
+/* ---------- ventilateurs ---------- */
+
+/* chaque ventilateur est une vraie boîte 3D : 2 faces trouées + 4 flancs + pales au centre */
+.dp-pc-preview .fan {
+  --fc: var(--c1);
+  width: 104px;
+  height: 104px;
+  transform-style: preserve-3d;
+}
+
+.dp-pc-preview .fan > * {
+  transition:
+    filter 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.dp-pc-preview .fan-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 18%;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background:
+    radial-gradient(3px 3px at 9% 9%, rgb(255 255 255 / 0.22) 45%, transparent 55%),
+    radial-gradient(3px 3px at 91% 9%, rgb(255 255 255 / 0.22) 45%, transparent 55%),
+    radial-gradient(3px 3px at 9% 91%, rgb(255 255 255 / 0.22) 45%, transparent 55%),
+    radial-gradient(3px 3px at 91% 91%, rgb(255 255 255 / 0.22) 45%, transparent 55%),
+    radial-gradient(circle, transparent 43px, rgb(10 8 16 / 0.94) 44px);
+}
+
+.dp-pc-preview .fan-face--f {
+  transform: translateZ(13px);
+}
+.dp-pc-preview .fan-face--b {
+  transform: translateZ(-13px) rotateY(180deg);
+}
+
+/* anneau LED, présent sur les deux faces */
+.dp-pc-preview .fan-face::after {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: var(--fc);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 61% 82%, transparent 85%);
+  mask: radial-gradient(circle, transparent 58%, #000 61% 82%, transparent 85%);
+  filter: drop-shadow(0 0 9px var(--fc)) drop-shadow(0 0 22px color-mix(in srgb, var(--fc) 55%, transparent));
+}
+
+/* flancs du cadre (l'épaisseur) */
+.dp-pc-preview .fan-s {
+  position: absolute;
+  background: linear-gradient(180deg, #171225, #0c0a13);
+}
+
+.dp-pc-preview .fan-s--t,
+.dp-pc-preview .fan-s--b {
+  left: 5px;
+  top: 50%;
+  width: 94px;
+  height: 26px;
+  margin-top: -13px;
+}
+
+.dp-pc-preview .fan-s--t {
+  transform: translateY(-51px) rotateX(90deg);
+}
+.dp-pc-preview .fan-s--b {
+  transform: translateY(51px) rotateX(90deg);
+}
+
+.dp-pc-preview .fan-s--l,
+.dp-pc-preview .fan-s--r {
+  left: 50%;
+  top: 5px;
+  width: 26px;
+  height: 94px;
+  margin-left: -13px;
+}
+
+.dp-pc-preview .fan-s--l {
+  transform: translateX(-51px) rotateY(90deg);
+}
+.dp-pc-preview .fan-s--r {
+  transform: translateX(51px) rotateY(90deg);
+}
+
+.dp-pc-preview .fan .blades {
+  position: absolute;
+  inset: 15%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, #2c2544 0deg 23deg, #151024 23deg 40deg);
+  -webkit-mask: radial-gradient(circle, #000 0 68%, transparent 70%);
+  mask: radial-gradient(circle, #000 0 68%, transparent 70%);
+  animation: spin 0.8s linear infinite;
+  opacity: 0.92;
+}
+
+.dp-pc-preview .fan .hub {
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #2c2540, #110e1b);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 0 10px -4px var(--fc);
+}
+
+/* effets lumineux */
+.dp-pc-preview[data-fx='breathe'] .fan-face::after {
+  animation: breathe 2.5s ease-in-out infinite;
+}
+
+.dp-pc-preview[data-fx='wave'] .fan-face::after,
+.dp-pc-preview[data-fx='cycle'] .fan-face::after {
+  background: conic-gradient(var(--fc) 0 130deg, color-mix(in srgb, var(--fc) 26%, transparent) 200deg 360deg);
+  animation: spin 1.3s linear infinite;
+}
+
+.dp-pc-preview[data-fx='cycle'] .fan-face::after {
+  animation:
+    spin 1.3s linear infinite,
+    hue 5s linear infinite;
+}
+.dp-pc-preview[data-fx='cycle'] .pump-cap .pumpring {
+  animation:
+    spin 3.2s linear infinite,
+    hue 5s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes hue {
+  to {
+    filter: hue-rotate(360deg) drop-shadow(0 0 7px var(--fc));
+  }
+}
+
+/* extinction générale */
+.dp-pc-preview[data-power='off'] .fan-face::after,
+.dp-pc-preview[data-power='off'] .pumpring,
+.dp-pc-preview[data-power='off'] .striptop,
+.dp-pc-preview[data-power='off'] .mobo-strip,
+.dp-pc-preview[data-power='off'] .rad-glow,
+.dp-pc-preview[data-power='off'] .gpustrip,
+.dp-pc-preview[data-power='off'] .front::before,
+.dp-pc-preview[data-power='off'] .top::before,
+.dp-pc-preview[data-power='off'] .aurora span {
+  opacity: 0.04 !important;
+}
+
+.dp-pc-preview[data-power='off'] .blades {
+  animation-play-state: paused;
+}
+.dp-pc-preview[data-power='off'] .ram-stick::before,
+.dp-pc-preview[data-power='off'] .chipset::after {
+  opacity: 0.05;
+  animation: none;
+  box-shadow: none;
+}
+
+/* colonne de 3 intakes plaqués contre le fond du boîtier, à droite de la carte mère,
+   orientés vers la vitre latérale — comme la carte mère */
+.dp-pc-preview .fan--f1 {
+  transform: translate(-50%, -50%) translate3d(150px, -146px, -109px);
+}
+.dp-pc-preview .fan--f2 {
+  transform: translate(-50%, -50%) translate3d(150px, -36px, -109px);
+}
+.dp-pc-preview .fan--f3 {
+  transform: translate(-50%, -50%) translate3d(150px, 74px, -109px);
+}
+
+/* support vertical de la colonne, contre le fond */
+.dp-pc-preview .fans-bracket {
+  width: 122px;
+  height: 348px;
+  transform: translate(-50%, -50%) translate3d(150px, -36px, -123px);
+  border: 1.5px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px;
+  background: rgb(0 0 0 / 0.3);
+}
+
+/* extraction arrière : la boîte 3D a deux faces, visible de l'intérieur ET par la découpe du panneau */
+.dp-pc-preview .fan--rear {
+  transform: translate(-50%, -50%) translate3d(-220px, -138px, 0) rotateY(90deg);
+}
+
+/* ---------- sélection / focus ---------- */
+
+/* le filtre ne doit jamais toucher .fan directement (il aplatirait sa 3D) : on vise ses enfants */
+.dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .sk:not(.fan),
+.dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .fan > *,
+.dp-pc-preview .stage[data-scope]:not([data-scope='all']) .shell .sk {
+  filter: brightness(0.16) saturate(0.25);
+}
+
+.dp-pc-preview .stage[data-scope]:not([data-scope='all']) .shell .glass,
+.dp-pc-preview .stage[data-scope]:not([data-scope='all']) .shell .glass-front {
+  filter: none;
+  opacity: 0.5;
+}
+
+.dp-pc-preview .part.is-on .sk:not(.fan),
+.dp-pc-preview .part.is-on .fan > * {
+  filter: brightness(1.12);
+}
+
+.dp-pc-preview .part[data-part]:hover .sk:not(.fan),
+.dp-pc-preview .part[data-part]:hover .fan > * {
+  filter: brightness(1.22) saturate(1.1);
+}

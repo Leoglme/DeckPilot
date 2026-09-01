@@ -1,0 +1,41 @@
+name: ✅ CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: 🧹 Lint, typecheck & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v5
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧹 Lint + typecheck
+        run: npm run lint
+
+      - name: 🛠️ Static build (catches build-time errors)
+        run: npm run generate

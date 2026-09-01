@@ -1,0 +1,173 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+@config '../../../tailwind.config.js';
+
+/* Registered so the scene accent can cross-fade the whole app when the ambiance changes. */
+@property --scene-a {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #28d7f0;
+}
+@property --scene-b {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8b5cf6;
+}
+@property --scene-c {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4361ee;
+}
+@property --scope {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #28d7f0;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    background-color: var(--app-bg);
+    color: var(--app-ink);
+    font-family: var(--app-font-ui);
+  }
+
+  /* Tailwind v4 dropped the default pointer cursor on buttons — restore it app-wide. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+}
+
+/* DeckPilot design tokens — dark "RGB aquarium". */
+:root {
+  --app-font-ui: 'DM Sans', system-ui, sans-serif;
+  --app-font-display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+  --app-font-mono: 'DM Mono', ui-monospace, monospace;
+
+  --app-bg: #0c0a14;
+  --app-bg-2: #100d1a;
+  --app-surface: #181423;
+  --app-surface-2: #201a30;
+  --app-surface-3: #29223b;
+  --app-ink: #f4f1fa;
+  --app-ink-soft: #9c93b0;
+  --app-faint: #6a6280;
+  --app-line: rgba(255, 255, 255, 0.07);
+  --app-line-2: rgba(255, 255, 255, 0.13);
+  --app-ink-btn: #0c0a14;
+  --app-ok: #3ddc97;
+  --app-warn: #ffc24b;
+  --app-crit: #ff6b7a;
+  --app-info: #8fb2ff;
+  --app-overlay: rgba(0, 0, 0, 0.6);
+  --app-shadow-soft: 0 20px 50px -24px rgba(0, 0, 0, 0.8);
+
+  --scene-a: #28d7f0;
+  --scene-b: #8b5cf6;
+  --scene-c: #4361ee;
+  --scope: #28d7f0;
+
+  --dp-gpu: #28d7f0;
+  --dp-mobo: #a855f7;
+  --dp-aio: #ff4d8d;
+  --dp-fans: #34e0c4;
+  --dp-ram: #ffb020;
+  --dp-case: #5b8cff;
+
+  color-scheme: dark;
+}
+
+/* Nuxt UI tokens remapped onto the app tokens; redeclared under html.dark, which Nuxt UI targets. */
+:root,
+html.dark {
+  --ui-bg: var(--app-surface);
+  --ui-bg-muted: var(--app-surface-2);
+  --ui-bg-elevated: var(--app-surface-2);
+  --ui-bg-accented: var(--app-surface-3);
+  --ui-bg-inverted: var(--app-ink);
+  --ui-text-dimmed: var(--app-faint);
+  --ui-text-muted: var(--app-ink-soft);
+  --ui-text-toned: var(--app-ink-soft);
+  --ui-text: var(--app-ink);
+  --ui-text-highlighted: var(--app-ink);
+  --ui-text-inverted: var(--app-bg);
+  --ui-border: var(--app-line);
+  --ui-border-muted: var(--app-line);
+  --ui-border-accented: var(--app-line-2);
+  --ui-border-inverted: var(--app-ink);
+  --ui-primary: var(--scope);
+  --ui-success: var(--app-ok);
+  --ui-error: var(--app-crit);
+  --ui-warning: var(--app-warn);
+  --ui-info: var(--app-info);
+}
+
+::selection {
+  background-color: var(--scope);
+  color: var(--app-ink-btn);
+}
+
+@layer components {
+  /* — App primitives — */
+  .app-card {
+    @apply rounded-2xl border;
+    border-color: var(--app-line);
+    background-color: var(--app-surface);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  /* Mono uppercase data label (section titles, form labels). */
+  .app-label {
+    @apply text-[0.66rem] font-medium tracking-[0.14em] uppercase;
+    font-family: var(--app-font-mono);
+    color: var(--app-faint);
+  }
+
+  /* Page title — display family, software scale. */
+  .app-page-title {
+    @apply text-2xl font-bold tracking-[-0.02em];
+    font-family: var(--app-font-display);
+    color: var(--app-ink);
+  }
+
+  /* Solid accent button — the accent follows the active scope/scene. */
+  .app-btn-accent {
+    @apply inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold;
+    font-family: var(--app-font-display);
+    background-color: var(--scope);
+    color: var(--app-ink-btn);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      0 10px 22px -14px var(--scope);
+    transition:
+      transform 0.15s ease,
+      filter 0.15s ease;
+  }
+
+  .app-btn-accent:not(:disabled):hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
