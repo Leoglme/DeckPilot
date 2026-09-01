@@ -1,6 +1,7 @@
 <template>
   <UApp>
     <NuxtLoadingIndicator color="var(--scene-a)" :height="2" :throttle="200" />
+    <DesktopUpdaterPanel />
     <BootGate v-if="!isBooted" @ready="onBootReady" />
     <NuxtLayout v-else>
       <NuxtPage />

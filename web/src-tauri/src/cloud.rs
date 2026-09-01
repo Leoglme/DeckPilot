@@ -115,7 +115,7 @@ fn token_path() -> PathBuf {
     base.join("fr.dibodev.deckpilot").join("pairing_token.txt")
 }
 
-/// Generate an 8-character pairing code without ambiguous characters.
+/// Generate a 6-character pairing code without ambiguous characters.
 fn generate_token() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -124,9 +124,9 @@ fn generate_token() -> String {
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_nanos() as u64)
         .unwrap_or(42);
-    let mut token = String::with_capacity(8);
+    let mut token = String::with_capacity(6);
     let mut n = seed;
-    for _ in 0..8 {
+    for _ in 0..6 {
         token.push(CHARSET[(n % CHARSET.len() as u64) as usize] as char);
         n = n.wrapping_mul(1_103_515_245).wrapping_add(12_345);
     }

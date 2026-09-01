@@ -704,6 +704,25 @@
         color: #fff;
         background: var(--scene-a);
         box-shadow: 0 12px 28px -12px var(--scene-a);
+        touch-action: manipulation;
+      }
+      .pairing button:disabled {
+        opacity: 0.65;
+      }
+      .pairing button:active:not(:disabled) {
+        filter: brightness(0.92);
+      }
+      .pair-msg {
+        min-height: 18px;
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .pair-msg.err {
+        color: #ff6b8a;
+      }
+      .pair-msg.ok {
+        color: var(--ok);
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -718,17 +737,18 @@
     <div class="pairing" id="pairing" hidden>
       <span class="icon"></span>
       <h1>DeckPilot</h1>
-      <p>Entre le code affiché dans les Réglages de DeckPilot sur ton PC, ou ouvre le lien de liaison.</p>
+      <p>Colle le lien depuis les Réglages de DeckPilot sur ton PC, ou entre le code à 6 caractères.</p>
       <input
         id="pairInput"
         type="text"
-        maxlength="8"
-        placeholder="abcdef12"
+        maxlength="64"
+        placeholder="abc123 ou lien"
         autocapitalize="none"
         autocomplete="off"
         spellcheck="false"
         inputmode="text"
       />
+      <p class="pair-msg" id="pairMsg" aria-live="polite"></p>
       <button id="pairBtn" type="button">Lier mon PC</button>
     </div>
 
@@ -822,10 +842,32 @@
           return (localStorage.getItem(TOKEN_KEY) || '').trim().toLowerCase()
         }
         function saveToken(raw) {
-          var token = (raw || '').trim().toLowerCase()
-          if (!token) return false
-          localStorage.setItem(TOKEN_KEY, token)
+          var token = normalizePairInput(raw)
+          if (!token || token.length < 6) return false
+          try {
+            localStorage.setItem(TOKEN_KEY, token)
+          } catch (error) {
+            return false
+          }
           return true
+        }
+        function normalizePairInput(raw) {
+          var value = (raw || '').trim()
+          if (!value) return ''
+          try {
+            var url = new URL(value)
+            var fromQuery = url.searchParams.get('pair')
+            if (fromQuery) return fromQuery.trim().toLowerCase()
+          } catch (error) {}
+          var match = value.match(/[?&]pair=([a-z0-9]+)/i)
+          if (match) return match[1].toLowerCase()
+          return value.replace(/[^a-z0-9]/gi, '').toLowerCase()
+        }
+        function setPairMessage(text, kind) {
+          var node = $('pairMsg')
+          node.textContent = text || ''
+          node.classList.remove('err', 'ok')
+          if (kind) node.classList.add(kind)
         }
         function showApp() {
           $('pairing').hidden = true
@@ -834,8 +876,34 @@
         function showPairing() {
           $('pairing').hidden = false
           $('app').hidden = true
-          setFooter(false)
-          $('footText').textContent = 'Lie ton PC pour commencer'
+        }
+        function getDevice(slot) {
+          for (var i = 0; i < DEVICES.length; i++) {
+            if (DEVICES[i].slot === slot) return DEVICES[i]
+          }
+          return null
+        }
+        function syncDevicesToScene(scene) {
+          DEVICES.forEach(function (device, index) {
+            device.color = scene.colors[index % scene.colors.length]
+          })
+          document.querySelectorAll('.dev .d').forEach(function (dot, index) {
+            if (DEVICES[index]) dot.style.setProperty('--c', DEVICES[index].color)
+          })
+        }
+        function refreshPreview() {
+          var fanDevice = getDevice('fans')
+          var fanColor = fanDevice ? fanDevice.color : state.lastColors[0]
+          document.querySelectorAll('[data-fan] i').forEach(function (led, index) {
+            var tint =
+              index % 3 === 0
+                ? fanColor
+                : index % 3 === 1
+                  ? state.lastColors[1] || fanColor
+                  : state.lastColors[2] || fanColor
+            led.style.background = tint
+            led.style.boxShadow = '0 0 7px ' + tint
+          })
         }
         function bootPairing() {
           var params = new URLSearchParams(window.location.search)
@@ -981,11 +1049,14 @@
             })
             b.classList.add('on')
             paintScene(scene)
+            syncDevicesToScene(scene)
+            refreshPreview()
             post('/api/gradient', { colors: scene.colors.map(hexToRgb) })
           })
           $('scenes').appendChild(b)
         })
         paintScene(SCENES[0])
+        refreshPreview()
 
         // ---- preview fans ----
         document.querySelectorAll('[data-fan]').forEach(function (fan) {
@@ -1082,6 +1153,9 @@
           if (now - applyThrottle > 90 && edit.device) {
             applyThrottle = now
             var rgb = hexToRgb(edit.color)
+            edit.device.color = edit.color
+            if (edit.row) edit.row.querySelector('.d').style.setProperty('--c', edit.color)
+            refreshPreview()
             post('/api/slot', { slot: edit.device.slot, r: rgb[0], g: rgb[1], b: rgb[2] })
           }
         }
@@ -1155,23 +1229,49 @@
           }
           var rgb = hexToRgb(edit.color)
           post('/api/slot', { slot: device.slot, r: rgb[0], g: rgb[1], b: rgb[2] })
+          refreshPreview()
           $('detail').classList.remove('open')
         })
 
-        $('pairBtn').addEventListener('click', function () {
-          if (!saveToken($('pairInput').value)) return
+        function submitPairing() {
+          var btn = $('pairBtn')
+          if (btn.disabled) return
+          var raw = $('pairInput').value
+          if (!raw.trim()) {
+            setPairMessage('Entre le code ou colle le lien depuis ton PC.', 'err')
+            return
+          }
+          if (!saveToken(raw)) {
+            setPairMessage('Code invalide — 6 caractères minimum.', 'err')
+            return
+          }
+          btn.disabled = true
+          setPairMessage('Liaison en cours…', null)
           showApp()
           refreshStatus()
-          post('/api/gradient', { colors: SCENES[0].colors.map(hexToRgb) })
-        })
+          post('/api/gradient', { colors: state.lastColors.map(hexToRgb) }).then(function (ok) {
+            btn.disabled = false
+            if (ok) {
+              setPairMessage('', null)
+              return
+            }
+            setFooter(false)
+            $('footText').textContent = 'PC injoignable — lance DeckPilot sur ton PC'
+          })
+        }
+
+        $('pairBtn').addEventListener('click', submitPairing)
         $('pairInput').addEventListener('keydown', function (event) {
-          if (event.key === 'Enter') $('pairBtn').click()
+          if (event.key === 'Enter') submitPairing()
         })
 
         if (bootPairing()) {
+          refreshPreview()
           refreshStatus()
           setInterval(refreshStatus, 5000)
           post('/api/gradient', { colors: SCENES[0].colors.map(hexToRgb) })
+        } else {
+          setPairMessage('Ouvre le lien copié depuis Réglages → iPhone.', null)
         }
       })()
     </script>

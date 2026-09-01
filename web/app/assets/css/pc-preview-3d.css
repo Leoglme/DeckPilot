@@ -984,7 +984,7 @@
 
 /* chaque ventilateur est une vraie boîte 3D : 2 faces trouées + 4 flancs + pales au centre */
 .dp-pc-preview .fan {
-  --fc: var(--c1);
+  --fc: inherit;
   width: 104px;
   height: 104px;
   transform-style: preserve-3d;
