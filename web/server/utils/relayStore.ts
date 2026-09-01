@@ -66,10 +66,11 @@ export function isConnected(token: string): boolean {
  * @returns `true` when the command was queued.
  */
 export function enqueueCommand(token: string, command: RelayCommand): boolean {
-  if (!isConnected(token)) {
-    return false
+  const existing: DesktopSession | undefined = sessions.get(token)
+  const session: DesktopSession = existing ?? { lastSeen: 0, commands: [] }
+  if (!existing) {
+    sessions.set(token, session)
   }
-  const session: DesktopSession = sessions.get(token)!
   session.commands.push(command)
   return true
 }

@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError, readBody } from 'h3'
-import { enqueueCommand, readTokenHeader } from './relayStore'
-import type { RelayCommand } from '../types/Relay'
+import { enqueueCommand, isConnected, readTokenHeader } from './relayStore'
+import type { RelayCommand, RelayCommandResponse } from '../types/Relay'
 
 /**
  * Read and validate the pairing token from an API request.
@@ -24,17 +24,14 @@ export function requireToken(event: H3Event): string {
  * @param command - Colour command for the desktop.
  * @returns JSON body matching the legacy LAN remote API.
  */
-export async function relayCommand(
-  event: H3Event,
-  command: RelayCommand,
-): Promise<{ ok: boolean; updated?: number; error?: string }> {
+export async function relayCommand(event: H3Event, command: RelayCommand): Promise<RelayCommandResponse> {
   const token: string = requireToken(event)
   const queued: boolean = enqueueCommand(token, command)
   if (!queued) {
     return { ok: false, error: 'PC injoignable' }
   }
   const updated: number = command.type === 'gradient' ? command.colors.length : 1
-  return { ok: true, updated }
+  return { ok: true, updated, connected: isConnected(token) }
 }
 
 /**
@@ -47,7 +44,7 @@ export async function relayCommand(
 export async function relayFromBody<T>(
   event: H3Event,
   build: (body: T) => RelayCommand | null,
-): Promise<{ ok: boolean; updated?: number; error?: string }> {
+): Promise<RelayCommandResponse> {
   const body: T = await readBody<T>(event)
   const command: RelayCommand | null = build(body)
   if (!command) {

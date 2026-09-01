@@ -16,6 +16,14 @@ export interface RelayStatusResponse {
   lastSeen: number | null
 }
 
+/** Response body for colour relay POST endpoints. */
+export interface RelayCommandResponse {
+  ok: boolean
+  updated?: number
+  connected?: boolean
+  error?: string
+}
+
 /** Response body for `GET /api/relay/poll`. */
 export interface RelayPollResponse {
   ok: true

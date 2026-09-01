@@ -46,6 +46,9 @@
         box-sizing: border-box;
         -webkit-tap-highlight-color: transparent;
       }
+      [hidden] {
+        display: none !important;
+      }
       html,
       body {
         margin: 0;
@@ -737,7 +740,10 @@
     <div class="pairing" id="pairing" hidden>
       <span class="icon"></span>
       <h1>DeckPilot</h1>
-      <p>Colle le lien depuis les Réglages de DeckPilot sur ton PC, ou entre le code à 6 caractères.</p>
+      <p>
+        Colle le lien depuis les Réglages de DeckPilot sur ton PC, ou entre le code à 6 caractères. Pas besoin du même
+        Wi‑Fi : la liaison passe par Internet.
+      </p>
       <input
         id="pairInput"
         type="text"
@@ -908,8 +914,15 @@
         function bootPairing() {
           var params = new URLSearchParams(window.location.search)
           var fromUrl = params.get('pair')
-          if (fromUrl && saveToken(fromUrl)) {
-            window.history.replaceState({}, '', window.location.pathname)
+          if (fromUrl) {
+            $('pairInput').value = fromUrl.trim().toLowerCase()
+            if (saveToken(fromUrl)) {
+              window.history.replaceState({}, '', window.location.pathname)
+              showApp()
+              setPairMessage('', null)
+              return true
+            }
+            setPairMessage('Lien invalide — copie-le depuis Réglages → iPhone.', 'err')
           }
           if (getToken()) {
             showApp()
@@ -991,9 +1004,9 @@
           })
             .then(function (r) {
               return r.json().then(function (body) {
-                var live = r.ok && body && body.ok !== false
-                setFooter(live)
-                return live
+                var accepted = r.ok && body && body.ok !== false
+                setFooter(!!(accepted && body.connected))
+                return accepted
               })
             })
             .catch(function () {
@@ -1249,14 +1262,12 @@
           setPairMessage('Liaison en cours…', null)
           showApp()
           refreshStatus()
-          post('/api/gradient', { colors: state.lastColors.map(hexToRgb) }).then(function (ok) {
+          post('/api/gradient', { colors: state.lastColors.map(hexToRgb) }).then(function (accepted) {
             btn.disabled = false
-            if (ok) {
-              setPairMessage('', null)
-              return
+            refreshStatus()
+            if (!accepted) {
+              $('footText').textContent = 'Erreur de liaison — réessaie'
             }
-            setFooter(false)
-            $('footText').textContent = 'PC injoignable — lance DeckPilot sur ton PC'
           })
         }
 
