@@ -8,7 +8,7 @@
     "dev": "nuxt dev",
     "dev:remote": "node scripts/use-mobile-index.mjs && cross-env NUXT_MOBILE_DEPLOY=1 nuxt dev",
     "build": "nuxt build",
-    "build:remote": "node scripts/use-mobile-index.mjs && cross-env NUXT_MOBILE_DEPLOY=1 nuxt build && node scripts/finalize-mobile-deploy.mjs",
+    "build:remote": "npm run gen:pwa-icons && node scripts/use-mobile-index.mjs && cross-env NUXT_MOBILE_DEPLOY=1 nuxt build && node scripts/finalize-mobile-deploy.mjs",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "desktop:generate": "cross-env NUXT_DESKTOP_BUILD=1 nuxt generate",
@@ -23,7 +23,8 @@
     "lint:ts": "node scripts/typecheck.mjs",
     "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:ts",
     "lint:fix": "npm run lint:prettier:fix && npm run lint:eslint:fix",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "gen:pwa-icons": "node scripts/gen-pwa-icons.mjs"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.109",
