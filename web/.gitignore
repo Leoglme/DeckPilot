@@ -7,6 +7,9 @@
 .cache
 dist
 
+# Mobile PWA shell copied at build/dev time (source: mobile/index.html)
+public/index.html
+
 # Node dependencies
 node_modules
 

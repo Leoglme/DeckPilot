@@ -6,9 +6,9 @@
   "description": "DeckPilot — unified RGB control and health for your PC (Windows-first, iPhone via Tauri).",
   "scripts": {
     "dev": "nuxt dev",
-    "dev:remote": "cross-env NUXT_MOBILE_DEPLOY=1 nuxt dev",
+    "dev:remote": "node scripts/use-mobile-index.mjs && cross-env NUXT_MOBILE_DEPLOY=1 nuxt dev",
     "build": "nuxt build",
-    "build:remote": "cross-env NUXT_MOBILE_DEPLOY=1 nuxt build && node scripts/finalize-mobile-deploy.mjs",
+    "build:remote": "node scripts/use-mobile-index.mjs && cross-env NUXT_MOBILE_DEPLOY=1 nuxt build && node scripts/finalize-mobile-deploy.mjs",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "desktop:generate": "cross-env NUXT_DESKTOP_BUILD=1 nuxt generate",
