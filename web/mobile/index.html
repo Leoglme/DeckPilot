@@ -200,9 +200,9 @@
       /* 3D preview (mobile) */
       .pv-wrap {
         flex: 0 0 auto;
-        height: 34vh;
-        min-height: 220px;
-        max-height: 280px;
+        height: 28vh;
+        min-height: 200px;
+        max-height: 250px;
         margin: 0 12px 6px;
         border-radius: 18px;
         overflow: hidden;
@@ -213,11 +213,14 @@
         --scene-a: var(--scene-a);
         --scene-b: var(--scene-b);
         --scene-c: var(--scene-c);
+        display: block;
+        min-height: 0 !important;
         height: 100%;
         border-radius: 0;
       }
       .pv-wrap .dp-pc-preview .stage {
         height: 100%;
+        perspective-origin: 50% 48%;
       }
       /* sélection composant : léger assombrissement du reste, sans masquer le PC */
       .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .sk:not(.fan),
@@ -1099,9 +1102,11 @@
           var stage = $('pvStage')
           var pivot = $('pvPivot')
           if (!stage || !pivot) return
-          var ry = -28
-          var rx = -16
-          var zoom = 0.52
+          var ry = -26
+          var rx = -15
+          var zoom = 0.46
+          var offsetX = -88
+          var offsetY = -72
           var dragging = false
           var px = 0
           var py = 0
@@ -1150,7 +1155,18 @@
             sway += ((idle ? 1 : 0) - sway) * 0.03
             var sy = Math.sin(time / 2600) * 6 * sway
             var sx = Math.cos(time / 3400) * 2.4 * sway
-            pivot.style.transform = 'scale(' + zoom + ') rotateX(' + (rx + sx) + 'deg) rotateY(' + (ry + sy) + 'deg)'
+            pivot.style.transform =
+              'translate3d(' +
+              offsetX +
+              'px,' +
+              offsetY +
+              'px,0) scale(' +
+              zoom +
+              ') rotateX(' +
+              (rx + sx) +
+              'deg) rotateY(' +
+              (ry + sy) +
+              'deg)'
             requestAnimationFrame(frame)
           }
           requestAnimationFrame(frame)
