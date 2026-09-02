@@ -2,6 +2,7 @@ mod cloud;
 mod health;
 mod remote;
 mod rgb;
+mod settings;
 
 /// Boot the DeckPilot desktop shell and expose the hardware bridge commands.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -10,7 +11,12 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .setup(|_app| {
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
+        .setup(|app| {
+            settings::apply_on_boot(app.handle());
             // Drive every component's live effect from one shared clock (perfectly in sync).
             rgb::start_engine();
             // Cloud relay so the deployed PWA on deckpilote.dibodev.fr can drive RGB from anywhere.
@@ -29,7 +35,9 @@ pub fn run() {
             health::health_open_url,
             remote::remote_url,
             cloud::pairing_token,
-            cloud::pwa_url
+            cloud::pwa_url,
+            settings::get_app_settings,
+            settings::set_app_setting
         ])
         .run(tauri::generate_context!())
         .expect("error while running the DeckPilot application");

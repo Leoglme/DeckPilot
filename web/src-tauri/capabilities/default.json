@@ -7,6 +7,7 @@
     "core:default",
     "process:default",
     "updater:default",
+    "autostart:default",
     {
       "identifier": "shell:allow-open",
       "allow": [{ "url": "https://**" }, { "url": "http://**" }]

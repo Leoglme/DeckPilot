@@ -19,7 +19,7 @@
           :aria-label="setting.title"
           class="dp-switch"
           :class="{ 'dp-switch--on': setting.on }"
-          @click="setting.on = !setting.on"
+          @click="toggleStartupSetting(setting)"
         />
       </div>
     </div>
@@ -38,7 +38,7 @@
           :aria-label="setting.title"
           class="dp-switch"
           :class="{ 'dp-switch--on': setting.on }"
-          @click="setting.on = !setting.on"
+          @click="toggleUpdateSetting(setting)"
         />
       </div>
     </div>
@@ -76,11 +76,16 @@
 
 <script lang="ts" setup>
 import type { Ref } from 'vue'
+import type { UseDesktopRuntimeReturn } from '~/types/Composables'
+import type { AppSettingKey, AppSettings } from '~/types/AppSettings'
 import type { SettingToggle } from '~/types/Settings'
 import { onMounted, ref } from 'vue'
 import { RemoteService } from '~/services/remoteService'
+import { SettingsService } from '~/services/settingsService'
 
 useHead({ title: 'Réglages' })
+
+const desktopRuntime: UseDesktopRuntimeReturn = useDesktopRuntime()
 
 const pairingToken: Ref<string> = ref('…')
 const pwaUrl: Ref<string> = ref('https://deckpilote.dibodev.fr/')
@@ -102,8 +107,55 @@ async function copyPwaUrl(): Promise<void> {
   }
 }
 
+/**
+ * Apply persisted desktop settings to the Réglages toggles.
+ * @param settings - Settings loaded from the Tauri shell.
+ */
+function applySettings(settings: AppSettings): void {
+  startupSettings.value.forEach((setting: SettingToggle): void => {
+    setting.on = settings[setting.key as AppSettingKey]
+  })
+  updateSettings.value.forEach((setting: SettingToggle): void => {
+    setting.on = settings[setting.key as AppSettingKey]
+  })
+}
+
+/** Load persisted settings when running inside the desktop shell. */
+async function loadSettings(): Promise<void> {
+  if (!desktopRuntime.isDesktopApp.value) {
+    return
+  }
+  const settings: AppSettings = await SettingsService.getSettings()
+  applySettings(settings)
+}
+
+/**
+ * Toggle a startup / background setting and persist it on desktop.
+ * @param setting - The row being toggled.
+ */
+async function toggleStartupSetting(setting: SettingToggle): Promise<void> {
+  setting.on = !setting.on
+  if (!desktopRuntime.isDesktopApp.value) {
+    return
+  }
+  await SettingsService.setSetting(setting.key as AppSettingKey, setting.on)
+}
+
+/**
+ * Toggle an update-related setting and persist it on desktop.
+ * @param setting - The row being toggled.
+ */
+async function toggleUpdateSetting(setting: SettingToggle): Promise<void> {
+  setting.on = !setting.on
+  if (!desktopRuntime.isDesktopApp.value) {
+    return
+  }
+  await SettingsService.setSetting(setting.key as AppSettingKey, setting.on)
+}
+
 onMounted((): void => {
   void loadRemotePairing()
+  void loadSettings()
 })
 
 const startupSettings: Ref<SettingToggle[]> = ref([

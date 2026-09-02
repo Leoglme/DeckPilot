@@ -19,6 +19,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
     />
+    <link rel="stylesheet" href="/pc-preview-3d.css" />
     <style>
       :root {
         --ink: #0c0a14;
@@ -180,116 +181,101 @@
         -webkit-overflow-scrolling: touch;
       }
 
-      /* preview */
-      .pv {
-        height: 150px;
+      /* 3D preview (mobile) */
+      .pv-wrap {
+        margin: 6px 0 12px;
         border-radius: 22px;
-        position: relative;
         overflow: hidden;
-        margin: 6px 0 18px;
         border: 1px solid var(--line);
+        background: #07050d;
+      }
+      .pv-wrap .dp-pc-preview {
+        --scene-a: var(--scene-a);
+        --scene-b: var(--scene-b);
+        --scene-c: var(--scene-c);
+        min-height: 240px;
+        height: 240px;
+        border-radius: 0;
+      }
+      .pv-wrap .dp-pc-preview .stage {
+        height: 240px;
+      }
+      .pv-wrap .dp-pc-preview .pivot {
+        transform: scale(0.72) rotateX(-14deg) rotateY(-32deg);
+      }
+      .pv-hud {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 10px;
+        z-index: 12;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 22px;
-        background: radial-gradient(
-          120% 120% at 30% 10%,
-          color-mix(in srgb, var(--scene-a) 18%, var(--ink-3)),
-          var(--ink-3) 78%
-        );
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 10px;
+        pointer-events: none;
       }
-      .blob {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(34px);
-        mix-blend-mode: screen;
-      }
-      .blob.a {
-        width: 150px;
-        height: 150px;
-        background: radial-gradient(circle, var(--scene-a), transparent 66%);
-        left: -24px;
-        top: -30px;
-        animation: drift1 10s ease-in-out infinite;
-      }
-      .blob.b {
-        width: 150px;
-        height: 150px;
-        background: radial-gradient(circle, var(--scene-b), transparent 66%);
-        right: -20px;
-        bottom: -30px;
-        animation: drift2 12s ease-in-out infinite;
-      }
-      @keyframes drift1 {
-        0%,
-        100% {
-          transform: translate(0, 0) scale(1);
-        }
-        50% {
-          transform: translate(24px, 20px) scale(1.16);
-        }
-      }
-      @keyframes drift2 {
-        0%,
-        100% {
-          transform: translate(0, 0) scale(1);
-        }
-        50% {
-          transform: translate(-20px, -18px) scale(1.14);
-        }
-      }
-      .fan {
-        width: 76px;
-        height: 76px;
-        position: relative;
-        z-index: 2;
-      }
-      .fan i {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 5px;
-        height: 5px;
-        margin: -2.5px;
-        border-radius: 50%;
-        background: var(--scene-a);
-        box-shadow: 0 0 7px var(--scene-a);
-        animation: chase 1.5s linear infinite;
-      }
-      .fan i:nth-child(2) {
-        background: var(--scene-b);
-        box-shadow: 0 0 7px var(--scene-b);
-      }
-      .fan i:nth-child(3) {
-        background: var(--scene-c);
-        box-shadow: 0 0 7px var(--scene-c);
-      }
-      .fan .hub {
-        position: absolute;
-        inset: 34%;
-        border-radius: 50%;
-        background: radial-gradient(circle at 40% 34%, #2a2438, #12101c);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-      }
-      @keyframes chase {
-        0%,
-        100% {
-          opacity: 0.3;
-          transform: var(--tf) scale(0.82);
-        }
-        16% {
-          opacity: 1;
-          transform: var(--tf) scale(1.16);
-        }
-      }
-      .pv .lbl {
-        position: absolute;
-        left: 16px;
-        bottom: 13px;
-        z-index: 3;
+      .pv-scene {
         font-family: var(--font-d);
         font-weight: 800;
-        font-size: 21px;
+        font-size: 18px;
+      }
+      .pv-scope {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+      }
+      .scope {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        margin-bottom: 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .scope-chip {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--line-2);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--muted);
+      }
+      .scope-chip .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--chip-c, var(--scene-a));
+        box-shadow: 0 0 8px color-mix(in srgb, var(--chip-c, var(--scene-a)) 70%, transparent);
+      }
+      .scope-chip.on {
+        color: var(--text);
+        border-color: color-mix(in srgb, var(--chip-c, var(--scene-a)) 55%, var(--line-2));
+        background: color-mix(in srgb, var(--chip-c, var(--scene-a)) 12%, var(--surface));
+      }
+      .scope-chip--all .dot {
+        background: conic-gradient(var(--scene-a), var(--scene-b), var(--scene-c), var(--scene-a));
+      }
+      .scope-hint {
+        margin: -8px 0 14px;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .color-all {
+        width: 100%;
+        margin-bottom: 8px;
+        border: 1px solid var(--line-2);
+        border-radius: 14px;
+        padding: 13px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--text);
       }
 
       /* scenes — big cards, 2 per row (no horizontal scroll, no outline) */
@@ -765,14 +751,11 @@
         <button class="pwr on" id="pwr" aria-label="Tout allumer / éteindre"></button>
       </div>
       <div class="body">
-        <div class="pv">
-          <span class="blob a"></span><span class="blob b"></span> <span class="fan" data-fan></span
-          ><span class="fan" data-fan></span>
-          <span class="lbl" id="sceneLbl">Abyss</span>
-        </div>
+        <div class="pv-wrap"><!-- PREVIEW_TOWER --></div>
+        <p class="scope-hint">Touche un composant dans le PC, ou choisis une zone ci-dessous.</p>
+        <div class="scope" id="scopeChips"></div>
         <div class="scenes" id="scenes"></div>
-        <div class="sec">Composants</div>
-        <div id="devices"></div>
+        <button type="button" class="color-all" id="colorAllBtn">Couleur personnalisée…</button>
       </div>
       <div class="foot" id="foot"><span class="dot"></span><span id="footText">Connexion…</span></div>
     </div>
@@ -835,11 +818,27 @@
           { slot: 'aio', name: 'Watercooling', sub: 'Pompe ARGB', color: '#F81683', effect: 'Respire' },
           { slot: 'fans', name: 'Ventilateurs', sub: 'Boîtier', color: '#00FFD5', effect: 'Vague' },
         ]
+        var ALL_DEVICE = { slot: 'all', name: 'Tout le PC', sub: 'Ensemble du PC', color: '#00FFD5', effect: 'Fixe' }
+        var SCOPES = [
+          { id: 'all', label: 'Tout', color: null },
+          { id: 'gpu', label: 'GPU' },
+          { id: 'mobo', label: 'Carte mère' },
+          { id: 'aio', label: 'AIO' },
+          { id: 'fans', label: 'Ventilateurs' },
+        ]
+        var SCOPE_LABELS = {
+          all: 'Tout le PC',
+          gpu: 'Carte graphique',
+          mobo: 'Carte mère',
+          aio: 'Watercooling',
+          fans: 'Ventilateurs',
+        }
         var EFFECTS = ['Fixe', 'Respire', 'Vague', 'Cycle', 'Réactif']
 
         var TOKEN_KEY = 'dp_pair_token'
-        var state = { scene: 'abyss', on: true, lastColors: SCENES[0].colors.slice() }
-        var edit = { device: null, row: null, color: '#00FFD5', effect: 'Fixe', h: 0, s: 1, v: 1 }
+        var state = { scene: 'abyss', on: true, scope: 'all', lastColors: SCENES[0].colors.slice() }
+        var edit = { device: null, color: '#00FFD5', effect: 'Fixe', h: 0, s: 1, v: 1 }
+        var pvMoved = 0
 
         var $ = function (id) {
           return document.getElementById(id)
@@ -893,23 +892,65 @@
           DEVICES.forEach(function (device, index) {
             device.color = scene.colors[index % scene.colors.length]
           })
-          document.querySelectorAll('.dev .d').forEach(function (dot, index) {
-            if (DEVICES[index]) dot.style.setProperty('--c', DEVICES[index].color)
+          ALL_DEVICE.color = scene.colors[0]
+          refreshPreview3d()
+          refreshScopeChips()
+        }
+        function refreshPreview3d() {
+          var preview = $('pcPreview')
+          if (!preview) return
+          var mobo = getDevice('mobo')
+          var aio = getDevice('aio')
+          var gpu = getDevice('gpu')
+          var fans = getDevice('fans')
+          preview.style.setProperty('--c1', mobo ? mobo.color : state.lastColors[0])
+          preview.style.setProperty('--c2', aio ? aio.color : state.lastColors[1] || state.lastColors[0])
+          preview.style.setProperty('--c3', gpu ? gpu.color : state.lastColors[2] || state.lastColors[0])
+          var fansPart = document.querySelector('[data-part="fans"]')
+          if (fansPart && fans) fansPart.style.setProperty('--fc', fans.color)
+        }
+        function deviceForScope(scope) {
+          if (scope === 'all') return ALL_DEVICE
+          return getDevice(scope)
+        }
+        function setScope(scope) {
+          state.scope = scope
+          var stage = $('pvStage')
+          if (stage) stage.dataset.scope = scope
+          var scopeLbl = $('scopeLbl')
+          if (scopeLbl) scopeLbl.textContent = SCOPE_LABELS[scope] || scope
+          document.querySelectorAll('.part[data-part]').forEach(function (part) {
+            part.classList.toggle('is-on', part.dataset.part === scope)
+          })
+          document.querySelectorAll('.scope-chip').forEach(function (chip) {
+            chip.classList.toggle('on', chip.dataset.scope === scope)
           })
         }
-        function refreshPreview() {
-          var fanDevice = getDevice('fans')
-          var fanColor = fanDevice ? fanDevice.color : state.lastColors[0]
-          document.querySelectorAll('[data-fan] i').forEach(function (led, index) {
-            var tint =
-              index % 3 === 0
-                ? fanColor
-                : index % 3 === 1
-                  ? state.lastColors[1] || fanColor
-                  : state.lastColors[2] || fanColor
-            led.style.background = tint
-            led.style.boxShadow = '0 0 7px ' + tint
+        function refreshScopeChips() {
+          document.querySelectorAll('.scope-chip').forEach(function (chip) {
+            if (chip.dataset.scope === 'all') return
+            var device = getDevice(chip.dataset.scope)
+            if (device) chip.style.setProperty('--chip-c', device.color)
           })
+        }
+        function pushScopeColor(hex) {
+          var rgb = hexToRgb(hex)
+          if (state.scope === 'all') {
+            DEVICES.forEach(function (device) {
+              device.color = hex
+            })
+            ALL_DEVICE.color = hex
+            state.lastColors = [hex, hex, hex]
+            refreshPreview3d()
+            refreshScopeChips()
+            return post('/api/all', { r: rgb[0], g: rgb[1], b: rgb[2] })
+          }
+          var device = deviceForScope(state.scope)
+          if (!device) return Promise.resolve(false)
+          device.color = hex
+          refreshPreview3d()
+          refreshScopeChips()
+          return post('/api/slot', { slot: device.slot, r: rgb[0], g: rgb[1], b: rgb[2] })
         }
         function bootPairing() {
           var params = new URLSearchParams(window.location.search)
@@ -1035,10 +1076,94 @@
           document.body.style.setProperty('--scene-a', scene.colors[0])
           document.body.style.setProperty('--scene-b', scene.colors[1])
           document.body.style.setProperty('--scene-c', scene.colors[2])
-          $('sceneLbl').textContent = scene.name
+          var sceneLbl = $('sceneLbl')
+          if (sceneLbl) sceneLbl.textContent = scene.name
         }
 
-        // ---- scenes ----
+        SCOPES.forEach(function (scope) {
+          var chip = document.createElement('button')
+          chip.type = 'button'
+          chip.className = 'scope-chip' + (scope.id === 'all' ? ' scope-chip--all' : '')
+          chip.dataset.scope = scope.id
+          if (scope.id !== 'all') {
+            var device = getDevice(scope.id)
+            chip.style.setProperty('--chip-c', device ? device.color : state.lastColors[0])
+          }
+          chip.innerHTML =
+            (scope.id === 'all' ? '<span class="dot"></span>' : '<span class="dot"></span>') + scope.label
+          chip.addEventListener('click', function () {
+            setScope(scope.id)
+            openDetail(deviceForScope(scope.id))
+          })
+          $('scopeChips').appendChild(chip)
+        })
+        $('colorAllBtn').addEventListener('click', function () {
+          setScope('all')
+          openDetail(ALL_DEVICE)
+        })
+
+        // ---- 3D preview interaction ----
+        ;(function initPreview3d() {
+          var stage = $('pvStage')
+          var pivot = $('pvPivot')
+          if (!stage || !pivot) return
+          var ry = -32
+          var rx = -14
+          var zoom = 0.72
+          var dragging = false
+          var px = 0
+          var py = 0
+          var lastTouch = 0
+          var sway = 1
+
+          document.querySelectorAll('.part[data-part]').forEach(function (part) {
+            part.addEventListener('click', function () {
+              if (pvMoved < 6) {
+                var slot = part.dataset.part
+                var next = state.scope === slot ? 'all' : slot
+                setScope(next)
+                openDetail(deviceForScope(next))
+              }
+            })
+          })
+
+          stage.addEventListener('pointerdown', function (event) {
+            dragging = true
+            pvMoved = 0
+            px = event.clientX
+            py = event.clientY
+            lastTouch = performance.now()
+            stage.classList.add('stage--dragging')
+            stage.setPointerCapture(event.pointerId)
+          })
+          stage.addEventListener('pointermove', function (event) {
+            if (!dragging) return
+            var dx = event.clientX - px
+            var dy = event.clientY - py
+            pvMoved += Math.abs(dx) + Math.abs(dy)
+            px = event.clientX
+            py = event.clientY
+            ry += dx * 0.35
+            rx = Math.max(-44, Math.min(12, rx - dy * 0.25))
+            lastTouch = performance.now()
+          })
+          function endDrag() {
+            dragging = false
+            stage.classList.remove('stage--dragging')
+          }
+          stage.addEventListener('pointerup', endDrag)
+          stage.addEventListener('pointercancel', endDrag)
+
+          function frame(time) {
+            var idle = !dragging && time - lastTouch > 2600
+            sway += ((idle ? 1 : 0) - sway) * 0.03
+            var sy = Math.sin(time / 2600) * 6 * sway
+            var sx = Math.cos(time / 3400) * 2.4 * sway
+            pivot.style.transform = 'scale(' + zoom + ') rotateX(' + (rx + sx) + 'deg) rotateY(' + (ry + sy) + 'deg)'
+            requestAnimationFrame(frame)
+          }
+          requestAnimationFrame(frame)
+        })()
         SCENES.forEach(function (scene) {
           var b = document.createElement('button')
           b.className = 'scene' + (scene.id === state.scene ? ' on' : '')
@@ -1063,50 +1188,13 @@
             b.classList.add('on')
             paintScene(scene)
             syncDevicesToScene(scene)
-            refreshPreview()
             post('/api/gradient', { colors: scene.colors.map(hexToRgb) })
           })
           $('scenes').appendChild(b)
         })
         paintScene(SCENES[0])
-        refreshPreview()
-
-        // ---- preview fans ----
-        document.querySelectorAll('[data-fan]').forEach(function (fan) {
-          for (var i = 0; i < 10; i++) {
-            var led = document.createElement('i')
-            var tf = 'rotate(' + (i / 10) * 360 + 'deg) translateY(-13px)'
-            led.style.setProperty('--tf', tf)
-            led.style.transform = tf
-            led.style.animationDelay = ((i / 10) * 1.5).toFixed(2) + 's'
-            fan.appendChild(led)
-          }
-          var hub = document.createElement('span')
-          hub.className = 'hub'
-          fan.appendChild(hub)
-        })
-
-        // ---- devices ----
-        DEVICES.forEach(function (device) {
-          var row = document.createElement('button')
-          row.className = 'dev'
-          row.innerHTML =
-            '<span class="d" style="--c:' +
-            device.color +
-            '"></span>' +
-            '<span class="m"><span class="nm">' +
-            device.name +
-            '</span><span class="fx">' +
-            device.effect +
-            ' · ' +
-            device.sub +
-            '</span></span>' +
-            '<svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>'
-          row.addEventListener('click', function () {
-            openDetail(device, row)
-          })
-          $('devices').appendChild(row)
-        })
+        refreshPreview3d()
+        setScope('all')
 
         // ---- power ----
         $('pwr').addEventListener('click', function () {
@@ -1165,11 +1253,7 @@
           var now = Date.now()
           if (now - applyThrottle > 90 && edit.device) {
             applyThrottle = now
-            var rgb = hexToRgb(edit.color)
-            edit.device.color = edit.color
-            if (edit.row) edit.row.querySelector('.d').style.setProperty('--c', edit.color)
-            refreshPreview()
-            post('/api/slot', { slot: edit.device.slot, r: rgb[0], g: rgb[1], b: rgb[2] })
+            pushScopeColor(edit.color)
           }
         }
         function pickDisc(event) {
@@ -1209,9 +1293,10 @@
         })
 
         // ---- detail open / apply ----
-        function openDetail(device, row) {
+        function openDetail(device) {
+          if (!device) return
+          setScope(device.slot)
           edit.device = device
-          edit.row = row
           edit.effect = device.effect
           var hsv = hexToHsv(device.color)
           edit.h = hsv.h
@@ -1236,13 +1321,7 @@
           if (!device) return
           device.color = edit.color
           device.effect = edit.effect
-          if (edit.row) {
-            edit.row.querySelector('.d').style.setProperty('--c', edit.color)
-            edit.row.querySelector('.fx').textContent = edit.effect + ' · ' + device.sub
-          }
-          var rgb = hexToRgb(edit.color)
-          post('/api/slot', { slot: device.slot, r: rgb[0], g: rgb[1], b: rgb[2] })
-          refreshPreview()
+          pushScopeColor(edit.color)
           $('detail').classList.remove('open')
         })
 
@@ -1277,7 +1356,7 @@
         })
 
         if (bootPairing()) {
-          refreshPreview()
+          refreshPreview3d()
           refreshStatus()
           setInterval(refreshStatus, 5000)
           post('/api/gradient', { colors: SCENES[0].colors.map(hexToRgb) })
