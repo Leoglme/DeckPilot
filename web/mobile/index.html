@@ -190,8 +190,7 @@
       }
 
       .body {
-        flex: 0 1 auto;
-        max-height: 34vh;
+        flex: 1 1 auto;
         overflow-y: auto;
         overflow-x: hidden;
         padding: 0 16px calc(env(safe-area-inset-bottom) + 10px);
@@ -200,10 +199,12 @@
 
       /* 3D preview (mobile) */
       .pv-wrap {
-        flex: 1 1 46vh;
-        min-height: 300px;
-        margin: 0 12px 8px;
-        border-radius: 20px;
+        flex: 0 0 auto;
+        height: 34vh;
+        min-height: 220px;
+        max-height: 280px;
+        margin: 0 12px 6px;
+        border-radius: 18px;
         overflow: hidden;
         border: 1px solid var(--line);
         background: #07050d;
@@ -213,20 +214,23 @@
         --scene-b: var(--scene-b);
         --scene-c: var(--scene-c);
         height: 100%;
-        min-height: 300px;
         border-radius: 0;
       }
       .pv-wrap .dp-pc-preview .stage {
         height: 100%;
-        min-height: 300px;
       }
-      .pv-wrap .dp-pc-preview .pivot {
-        transform: scale(0.88) rotateX(-14deg) rotateY(-32deg);
-      }
+      /* sélection composant : léger assombrissement du reste, sans masquer le PC */
       .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .sk:not(.fan),
-      .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .fan > *,
+      .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .fan > * {
+        filter: brightness(0.5) saturate(0.55) !important;
+        opacity: 0.82 !important;
+      }
       .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .shell .sk {
-        filter: none !important;
+        filter: brightness(0.72) saturate(0.8) !important;
+      }
+      .pv-wrap .dp-pc-preview .part.is-on .sk:not(.fan),
+      .pv-wrap .dp-pc-preview .part.is-on .fan > * {
+        filter: brightness(1.2) saturate(1.12) !important;
         opacity: 1 !important;
       }
       .pv-hud {
@@ -904,7 +908,7 @@
         function setScope(scope) {
           state.scope = scope
           var stage = $('pvStage')
-          if (stage) stage.dataset.scope = 'all'
+          if (stage) stage.dataset.scope = scope
           var scopeLbl = $('scopeLbl')
           if (scopeLbl) scopeLbl.textContent = SCOPE_LABELS[scope] || scope
           document.querySelectorAll('.part[data-part]').forEach(function (part) {
@@ -1095,9 +1099,9 @@
           var stage = $('pvStage')
           var pivot = $('pvPivot')
           if (!stage || !pivot) return
-          var ry = -32
-          var rx = -14
-          var zoom = 0.88
+          var ry = -28
+          var rx = -16
+          var zoom = 0.52
           var dragging = false
           var px = 0
           var py = 0
