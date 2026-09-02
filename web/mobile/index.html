@@ -110,7 +110,8 @@
         display: flex;
         align-items: center;
         gap: 11px;
-        padding: calc(env(safe-area-inset-top) + 16px) 20px 8px;
+        padding: calc(env(safe-area-inset-top) + 10px) 16px 6px;
+        flex: none;
       }
       .icon {
         width: 30px;
@@ -141,8 +142,23 @@
       .top b {
         font-family: var(--font-d);
         font-weight: 800;
-        font-size: 19px;
+        font-size: 17px;
+        display: block;
+        line-height: 1.1;
+      }
+      .top-status {
+        display: block;
+        font-family: var(--font-m);
+        font-size: 10px;
+        color: var(--dim);
+        line-height: 1.2;
+      }
+      .top-status.live {
+        color: var(--ok);
+      }
+      .top-meta {
         flex: 1;
+        min-width: 0;
       }
       .pwr {
         width: 52px;
@@ -174,17 +190,20 @@
       }
 
       .body {
-        flex: 1;
+        flex: 0 1 auto;
+        max-height: 34vh;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 6px 20px 20px;
+        padding: 0 16px calc(env(safe-area-inset-bottom) + 10px);
         -webkit-overflow-scrolling: touch;
       }
 
       /* 3D preview (mobile) */
       .pv-wrap {
-        margin: 6px 0 12px;
-        border-radius: 22px;
+        flex: 1 1 46vh;
+        min-height: 300px;
+        margin: 0 12px 8px;
+        border-radius: 20px;
         overflow: hidden;
         border: 1px solid var(--line);
         background: #07050d;
@@ -193,15 +212,22 @@
         --scene-a: var(--scene-a);
         --scene-b: var(--scene-b);
         --scene-c: var(--scene-c);
-        min-height: 240px;
-        height: 240px;
+        height: 100%;
+        min-height: 300px;
         border-radius: 0;
       }
       .pv-wrap .dp-pc-preview .stage {
-        height: 240px;
+        height: 100%;
+        min-height: 300px;
       }
       .pv-wrap .dp-pc-preview .pivot {
-        transform: scale(0.72) rotateX(-14deg) rotateY(-32deg);
+        transform: scale(0.88) rotateX(-14deg) rotateY(-32deg);
+      }
+      .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .sk:not(.fan),
+      .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .part:not(.is-on) .fan > *,
+      .pv-wrap .dp-pc-preview .stage[data-scope]:not([data-scope='all']) .shell .sk {
+        filter: none !important;
+        opacity: 1 !important;
       }
       .pv-hud {
         position: absolute;
@@ -229,8 +255,8 @@
         display: flex;
         gap: 8px;
         overflow-x: auto;
-        padding-bottom: 4px;
-        margin-bottom: 16px;
+        padding: 0 16px 8px;
+        flex: none;
         -webkit-overflow-scrolling: touch;
       }
       .scope-chip {
@@ -261,36 +287,30 @@
       .scope-chip--all .dot {
         background: conic-gradient(var(--scene-a), var(--scene-b), var(--scene-c), var(--scene-a));
       }
-      .scope-hint {
-        margin: -8px 0 14px;
-        font-size: 12px;
-        color: var(--dim);
-      }
       .color-all {
         width: 100%;
-        margin-bottom: 8px;
+        margin: 10px 0 4px;
         border: 1px solid var(--line-2);
         border-radius: 14px;
-        padding: 13px 16px;
+        padding: 12px 16px;
         font-size: 14px;
         font-weight: 600;
         background: var(--surface);
         color: var(--text);
       }
-
-      /* scenes — big cards, 2 per row (no horizontal scroll, no outline) */
+      /* scenes — 2 per row */
       .scenes {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 22px;
+        gap: 10px;
+        margin-bottom: 8px;
       }
       .scene {
         position: relative;
         overflow: hidden;
-        aspect-ratio: 1.42;
-        border-radius: 18px;
-        padding: 15px;
+        aspect-ratio: 1.35;
+        border-radius: 16px;
+        padding: 12px;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -417,30 +437,9 @@
         flex: none;
       }
 
-      /* footer status */
+      /* footer status — hidden, status moved to header */
       .foot {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 11px 0 calc(env(safe-area-inset-bottom) + 14px);
-        font-family: var(--font-m);
-        font-size: 11.5px;
-        color: var(--dim);
-        border-top: 1px solid var(--line);
-      }
-      .foot .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--dim);
-      }
-      .foot.live .dot {
-        background: var(--ok);
-        box-shadow: 0 0 8px var(--ok);
-      }
-      .foot.live {
-        color: var(--muted);
+        display: none;
       }
 
       /* detail (iOS-style push view) */
@@ -747,17 +746,19 @@
     <div class="app" id="app" hidden>
       <div class="top">
         <span class="icon"></span>
-        <b>DeckPilot</b>
+        <div class="top-meta">
+          <b>DeckPilot</b>
+          <span class="top-status" id="footText">Connexion…</span>
+        </div>
         <button class="pwr on" id="pwr" aria-label="Tout allumer / éteindre"></button>
       </div>
+      <div class="pv-wrap"><!-- PREVIEW_TOWER --></div>
+      <div class="scope" id="scopeChips"></div>
       <div class="body">
-        <div class="pv-wrap"><!-- PREVIEW_TOWER --></div>
-        <p class="scope-hint">Touche un composant dans le PC, ou choisis une zone ci-dessous.</p>
-        <div class="scope" id="scopeChips"></div>
         <div class="scenes" id="scenes"></div>
         <button type="button" class="color-all" id="colorAllBtn">Couleur personnalisée…</button>
       </div>
-      <div class="foot" id="foot"><span class="dot"></span><span id="footText">Connexion…</span></div>
+      <div class="foot" id="foot" hidden aria-hidden="true"><span class="dot"></span><span></span></div>
     </div>
 
     <div class="detail" id="detail">
@@ -776,29 +777,16 @@
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
-        <div><b id="dName">Composant</b><small id="dSub">—</small></div>
+        <div><b id="dName">Couleur</b><small id="dSub">—</small></div>
       </div>
 
-      <div class="seg">
-        <button class="seg-b on" id="segColor" data-pane="color">Couleur</button>
-        <button class="seg-b" id="segEffect" data-pane="effect">Effet</button>
+      <div class="disc-wrap">
+        <div class="disc" id="disc"><span class="h" id="handle"></span></div>
       </div>
-
-      <div class="pane" id="paneColor">
-        <div class="disc-wrap">
-          <div class="disc" id="disc"><span class="h" id="handle"></span></div>
-        </div>
-        <div class="bright">
-          <label>Luminosité <span class="v" id="brightVal">100%</span></label>
-          <input type="range" min="0" max="100" value="100" class="brange" id="bright" aria-label="Luminosité" />
-        </div>
+      <div class="bright">
+        <label>Luminosité <span class="v" id="brightVal">100%</span></label>
+        <input type="range" min="0" max="100" value="100" class="brange" id="bright" aria-label="Luminosité" />
       </div>
-
-      <div class="pane" id="paneEffect" hidden>
-        <div class="effs" id="effs"></div>
-      </div>
-
-      <button class="apply" id="apply">Appliquer</button>
     </div>
 
     <script>
@@ -916,11 +904,11 @@
         function setScope(scope) {
           state.scope = scope
           var stage = $('pvStage')
-          if (stage) stage.dataset.scope = scope
+          if (stage) stage.dataset.scope = 'all'
           var scopeLbl = $('scopeLbl')
           if (scopeLbl) scopeLbl.textContent = SCOPE_LABELS[scope] || scope
           document.querySelectorAll('.part[data-part]').forEach(function (part) {
-            part.classList.toggle('is-on', part.dataset.part === scope)
+            part.classList.toggle('is-on', scope !== 'all' && part.dataset.part === scope)
           })
           document.querySelectorAll('.scope-chip').forEach(function (chip) {
             chip.classList.toggle('on', chip.dataset.scope === scope)
@@ -1026,8 +1014,10 @@
           return { h: h, s: max === 0 ? 0 : d / max, v: max }
         }
         function setFooter(live) {
-          $('foot').classList.toggle('live', live)
-          $('footText').textContent = live ? 'Connecté à ton PC' : 'PC injoignable'
+          var node = $('footText')
+          if (!node) return
+          node.classList.toggle('live', live)
+          node.textContent = live ? 'Connecté à ton PC' : 'PC injoignable'
         }
         function post(path, payload) {
           var token = getToken()
@@ -1093,13 +1083,11 @@
             (scope.id === 'all' ? '<span class="dot"></span>' : '<span class="dot"></span>') + scope.label
           chip.addEventListener('click', function () {
             setScope(scope.id)
-            openDetail(deviceForScope(scope.id))
           })
           $('scopeChips').appendChild(chip)
         })
         $('colorAllBtn').addEventListener('click', function () {
-          setScope('all')
-          openDetail(ALL_DEVICE)
+          openColorPicker()
         })
 
         // ---- 3D preview interaction ----
@@ -1109,7 +1097,7 @@
           if (!stage || !pivot) return
           var ry = -32
           var rx = -14
-          var zoom = 0.72
+          var zoom = 0.88
           var dragging = false
           var px = 0
           var py = 0
@@ -1122,7 +1110,6 @@
                 var slot = part.dataset.part
                 var next = state.scope === slot ? 'all' : slot
                 setScope(next)
-                openDetail(deviceForScope(next))
               }
             })
           })
@@ -1204,37 +1191,7 @@
           else post('/api/all', { r: 0, g: 0, b: 0 })
         })
 
-        // ---- segmented control ----
-        function selectPane(pane) {
-          $('segColor').classList.toggle('on', pane === 'color')
-          $('segEffect').classList.toggle('on', pane === 'effect')
-          $('paneColor').hidden = pane !== 'color'
-          $('paneEffect').hidden = pane !== 'effect'
-        }
-        $('segColor').addEventListener('click', function () {
-          selectPane('color')
-        })
-        $('segEffect').addEventListener('click', function () {
-          selectPane('effect')
-        })
-
-        // ---- effects ----
-        EFFECTS.forEach(function (name) {
-          var e = document.createElement('button')
-          e.className = 'eff'
-          e.textContent = name
-          e.dataset.eff = name
-          e.addEventListener('click', function () {
-            edit.effect = name
-            document.querySelectorAll('.eff').forEach(function (el) {
-              el.classList.remove('on')
-            })
-            e.classList.add('on')
-          })
-          $('effs').appendChild(e)
-        })
-
-        // ---- colour disc (hue + saturation) + brightness (value) ----
+        // ---- colour disc (live apply, no confirm button) ----
         var disc = $('disc'),
           handle = $('handle'),
           bright = $('bright'),
@@ -1253,6 +1210,7 @@
           var now = Date.now()
           if (now - applyThrottle > 90 && edit.device) {
             applyThrottle = now
+            edit.device.color = edit.color
             pushScopeColor(edit.color)
           }
         }
@@ -1292,12 +1250,10 @@
           throttledApply()
         })
 
-        // ---- detail open / apply ----
-        function openDetail(device) {
+        function openColorPicker() {
+          var device = deviceForScope(state.scope)
           if (!device) return
-          setScope(device.slot)
           edit.device = device
-          edit.effect = device.effect
           var hsv = hexToHsv(device.color)
           edit.h = hsv.h
           edit.s = hsv.s
@@ -1305,23 +1261,11 @@
           bright.value = Math.round(edit.v * 100)
           refreshColour()
           positionHandle()
-          $('dName').textContent = device.name
-          $('dSub').textContent = device.sub
-          document.querySelectorAll('.eff').forEach(function (el) {
-            el.classList.toggle('on', el.dataset.eff === device.effect)
-          })
-          selectPane('color')
+          $('dName').textContent = 'Couleur · ' + (SCOPE_LABELS[state.scope] || device.name)
+          $('dSub').textContent = 'Ajuste en direct'
           $('detail').classList.add('open')
         }
         $('back').addEventListener('click', function () {
-          $('detail').classList.remove('open')
-        })
-        $('apply').addEventListener('click', function () {
-          var device = edit.device
-          if (!device) return
-          device.color = edit.color
-          device.effect = edit.effect
-          pushScopeColor(edit.color)
           $('detail').classList.remove('open')
         })
 
